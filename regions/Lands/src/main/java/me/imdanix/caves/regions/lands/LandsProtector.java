@@ -2,7 +2,7 @@ package me.imdanix.caves.regions.lands;
 
 import me.angeschossen.lands.api.integration.LandsIntegration;
 import me.angeschossen.lands.api.land.Area;
-import me.angeschossen.lands.api.land.enums.LandSetting;
+import me.angeschossen.lands.api.flags.type.Flags;
 import me.imdanix.caves.regions.ActionType;
 import me.imdanix.caves.regions.RegionProtector;
 import org.bukkit.Bukkit;
@@ -36,8 +36,8 @@ public class LandsProtector implements RegionProtector {
         }
 
         return switch (type) {
-            case ENTITY -> area.hasLandSetting(LandSetting.ENTITY_GRIEFING);
-            case BLOCK -> area.hasLandSetting(LandSetting.LEAF_DECAY);
+            case ENTITY -> area.hasNaturalFlag(Flags.ENTITY_GRIEFING);
+            case BLOCK -> area.hasNaturalFlag(Flags.LEAF_DECAY);
             case EFFECT -> effect;
         };
     }

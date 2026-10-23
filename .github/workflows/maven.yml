@@ -3,35 +3,77 @@ name: Java CI
 on:
   push:
     branches:
+      - '**'
+  pull_request:
+    branches:
       - master
+
+permissions:
+  contents: write
 
 jobs:
   build:
-
     if: "! contains(toJSON(github.event.commits.*.message), '[SKIP-CI]')"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - paper-api-version: 26.2.build.134-stable
+            api-version: '26.2'
+          - paper-api-version: 26.3.build.218-stable
+            api-version: '26.3'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 25
+          cache: maven
+
+      - name: Build with Maven (Paper ${{ matrix.api-version }})
+        run: mvn -B verify --file pom.xml -Dbukkit.version=${{ matrix.paper-api-version }} -Dpaper.api.version=${{ matrix.api-version }}
+
+      - name: Rename jar
+        run: |
+          mkdir -p release
+          cp DangerousCaves/target/Dangerous-Caves-*.jar release/Dangerous-Caves-Paper-${{ matrix.api-version }}.jar
+          cp DangerousCaves/target/classes/config.yml release/config-Paper-${{ matrix.api-version }}.yml
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dangerous-Caves-Paper-${{ matrix.api-version }}-${{ github.sha }}
+          path: |
+            release/Dangerous-Caves-Paper-${{ matrix.api-version }}.jar
+            release/config-Paper-${{ matrix.api-version }}.yml
+          if-no-files-found: error
+
+  release:
+    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@main
-      - name: Set up JDK 17
-        uses: actions/setup-java@main
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
         with:
-          distribution: 'temurin'
-          java-version: 17
+          path: dist
+          pattern: Dangerous-Caves-Paper-*
+          merge-multiple: true
 
-      - uses: actions/cache@main
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-
-      - name: Build with Maven
-        run: mvn -B package --file pom.xml
-
-      - uses: actions/upload-artifact@main
-        with:
-          name: Dangerous Caves
-          path: |
-            DangerousCaves/target/Dangerous-Caves-*.jar
-            DangerousCaves/target/classes/config.yml
+          tag_name: build-${{ github.ref_name }}-${{ github.run_number }}
+          name: Dangerous Caves build ${{ github.run_number }}
+          body: |
+            Automated release from master at commit ${{ github.sha }}.
+            Contains one jar per supported Paper version (26.2 and 26.3).
+          files: |
+            dist/*.jar
+            dist/*.yml
+          generate_release_notes: true

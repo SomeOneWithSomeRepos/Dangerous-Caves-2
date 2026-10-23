@@ -20,6 +20,6 @@ public record DualBound(int xMin, int xMax, int zMin, int zMax) implements Bound
 
     @Override
     public boolean isInside(int x, int z) {
-        return (xMin >= x && x <= xMax) && (zMin >= z && z <= zMax);
+        return (x >= xMin && x <= xMax) && (z >= zMin && z <= zMax);
     }
 }
