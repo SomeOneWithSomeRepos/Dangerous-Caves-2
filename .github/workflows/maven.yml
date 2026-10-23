@@ -15,6 +15,14 @@ jobs:
   build:
     if: "! contains(toJSON(github.event.commits.*.message), '[SKIP-CI]')"
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - paper-api-version: 26.2.build.134-stable
+            api-version: '26.2'
+          - paper-api-version: 26.3.build.218-stable
+            api-version: '26.3'
 
     steps:
       - uses: actions/checkout@v4
@@ -26,27 +34,46 @@ jobs:
           java-version: 25
           cache: maven
 
-      - name: Build with Maven
-        run: mvn -B verify --file pom.xml
+      - name: Build with Maven (Paper ${{ matrix.api-version }})
+        run: mvn -B verify --file pom.xml -Dbukkit.version=${{ matrix.paper-api-version }} -Dpaper.api.version=${{ matrix.api-version }}
+
+      - name: Rename jar
+        run: |
+          mkdir -p release
+          cp DangerousCaves/target/Dangerous-Caves-*.jar release/Dangerous-Caves-Paper-${{ matrix.api-version }}.jar
+          cp DangerousCaves/target/classes/config.yml release/config-Paper-${{ matrix.api-version }}.yml
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Dangerous-Caves-${{ github.sha }}
+          name: Dangerous-Caves-Paper-${{ matrix.api-version }}-${{ github.sha }}
           path: |
-            DangerousCaves/target/Dangerous-Caves-*.jar
-            DangerousCaves/target/classes/config.yml
+            release/Dangerous-Caves-Paper-${{ matrix.api-version }}.jar
+            release/config-Paper-${{ matrix.api-version }}.yml
           if-no-files-found: error
 
-      - name: Release on merge to default branch
-        if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+  release:
+    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: Dangerous-Caves-Paper-*
+          merge-multiple: true
+
+      - name: Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.ref_name }}-${{ github.run_number }}
           name: Dangerous Caves build ${{ github.run_number }}
           body: |
             Automated release from master at commit ${{ github.sha }}.
-            Compatible with Paper 26.2 and 26.3.
+            Contains one jar per supported Paper version (26.2 and 26.3).
           files: |
-            DangerousCaves/target/Dangerous-Caves-*.jar
+            dist/*.jar
+            dist/*.yml
           generate_release_notes: true

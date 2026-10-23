@@ -23,6 +23,7 @@
         <paperapi.26.2>26.2.build.134-stable</paperapi.26.2>
         <paperapi.26.3>26.3.build.218-stable</paperapi.26.3>
         <bukkit.version>${paperapi.26.3}</bukkit.version>
+        <paper.api.version>26.3</paper.api.version>
         <java.version>21</java.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
