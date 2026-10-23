@@ -3,35 +3,50 @@ name: Java CI
 on:
   push:
     branches:
+      - '**'
+  pull_request:
+    branches:
       - master
+
+permissions:
+  contents: write
 
 jobs:
   build:
-
     if: "! contains(toJSON(github.event.commits.*.message), '[SKIP-CI]')"
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@main
-      - name: Set up JDK 17
-        uses: actions/setup-java@main
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
-
-      - uses: actions/cache@main
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
+          java-version: 25
+          cache: maven
 
       - name: Build with Maven
-        run: mvn -B package --file pom.xml
+        run: mvn -B verify --file pom.xml
 
-      - uses: actions/upload-artifact@main
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: Dangerous Caves
+          name: Dangerous-Caves-${{ github.sha }}
           path: |
             DangerousCaves/target/Dangerous-Caves-*.jar
             DangerousCaves/target/classes/config.yml
+          if-no-files-found: error
+
+      - name: Release on merge to default branch
+        if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.ref_name }}-${{ github.run_number }}
+          name: Dangerous Caves build ${{ github.run_number }}
+          body: |
+            Automated release from master at commit ${{ github.sha }}.
+            Compatible with Paper 26.2 and 26.3.
+          files: |
+            DangerousCaves/target/Dangerous-Caves-*.jar
+          generate_release_notes: true
