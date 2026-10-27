@@ -262,11 +262,12 @@ public class CavesAging implements Tickable, Configurable {
             this.z = z;
             this.changeType = changeType;
         }
-    
+
         public void perform(Chunk chunk) {
             Block block = chunk.getBlock(x, y, z);
             Material type = block.getType();
             if (!lightLevelCheck.test(block)) return;
+            if (!Regions.INSTANCE.isAllowed(ActionType.BLOCK, block.getLocation())) return;
             switch (changeType) {
                 case VINE -> {
                     if (!replaceBlocks.contains(type)) return;

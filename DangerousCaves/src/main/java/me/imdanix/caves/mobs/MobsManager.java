@@ -2,6 +2,8 @@ package me.imdanix.caves.mobs;
 
 import me.imdanix.caves.configuration.Configurable;
 import me.imdanix.caves.configuration.Configuration;
+import me.imdanix.caves.regions.ActionType;
+import me.imdanix.caves.regions.Regions;
 import me.imdanix.caves.ticks.Dynamics;
 import me.imdanix.caves.ticks.TickLevel;
 import me.imdanix.caves.ticks.Tickable;
@@ -245,6 +247,7 @@ public class MobsManager implements Manager<CustomMob>, Listener, Tickable, Conf
                 loc.getBlockY() > yMax ||
                 !worlds.contains(loc.getWorld().getName()) ||
                 !Locations.isCave(loc) ||
+                !Regions.INSTANCE.isAllowed(ActionType.ENTITY, loc) ||
                 !Rng.chance(chance))
             return false;
         CustomMob mob = mobsPool.next();

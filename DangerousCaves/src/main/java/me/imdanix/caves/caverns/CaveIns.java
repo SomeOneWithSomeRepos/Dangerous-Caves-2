@@ -102,6 +102,7 @@ public class CaveIns implements Listener, Configurable {
 
             if (slowFall) {
                 allBlocks.forEach(l -> l.forEach(block -> {
+                    if (!Regions.INSTANCE.isAllowed(ActionType.BLOCK, block.getLocation())) return;
                     world.spawnFallingBlock(block.getLocation(), block.getState().getData());
                     block.setType(Material.AIR);
                 }));
@@ -113,6 +114,7 @@ public class CaveIns implements Listener, Configurable {
                 while (search.getY() > world.getMinHeight() && search.isPassable() && !(search = search.getRelative(BlockFace.DOWN)).getType().isSolid());
 
                 for (Block block : blocks) {
+                    if (!Regions.INSTANCE.isAllowed(ActionType.BLOCK, block.getLocation())) continue;
                     search = search.getRelative(BlockFace.UP);
                     search.setType(block.getType());
                     block.setType(Material.AIR);
