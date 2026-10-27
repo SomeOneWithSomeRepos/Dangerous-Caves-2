@@ -36,26 +36,30 @@ prefix: "&8[&4DangerousCaves&8] &r"
 #
 integration:
 
-  # For disabling features in specific regions
+  # For disabling features in specific regions (claims, protected areas, etc.)
+  # Requires the corresponding plugin to be installed, otherwise the mode is ignored
   protection:
     # Available options: worldguard, worldguard-flags, griefprevention, griefprevention-flags, lands, lands-effectless, none
     # If you have several plugins, you can use multiple checks - just separate modes with comma
     # mode: worldguard-flags,griefprevention
-    mode: none
+    # `lands` and `worldguard` modes are enabled by default, so the plugin will not alter blocks,
+    # spawn its mobs, cause cave-ins or apply effects inside Lands claims and WorldGuard regions
+    mode: lands,worldguard
     # `worldguard` will block any actions within regions. `worldguard-flags` requires flags to be set up
     # WorldGuard flags:
-    # dc-entity-grief (magma monster, lava creeper)
+    # dc-entity-grief (custom mobs spawning, magma monster, lava creeper)
     # dc-block-change (cave-ins, caves aging)
     # dc-player-effect (ambient sounds, hypoxia)
 
-    # `griefprevention-flags` mode requires GriefPreventionFlags plugin. You don't need it for `griefprevention`
+    # `griefprevention` blocks everything inside claims, `griefprevention-flags` requires GriefPreventionFlags plugin.
+    # You don't need GriefPreventionFlags for `griefprevention`
     # GriefPreventionFlags flags:
-    # DCNoEntityGrief (magma monster, lava creeper)
+    # DCNoEntityGrief (custom mobs spawning, magma monster, lava creeper)
     # DCNoBlockChange (cave-ins, caves aging)
     # DCNoPlayerEffect (ambient sounds, hypoxia)
 
-    # Lands settings:
-    # ENTITY_GRIEFING (magma monster, lava creeper)
+    # Lands settings (natural flags of the claims):
+    # ENTITY_GRIEFING (custom mobs spawning, magma monster, lava creeper)
     # LEAF_DECAY (cave-ins, caves aging)
     # `lands-effectless` (ambient sounds, hypoxia)
 

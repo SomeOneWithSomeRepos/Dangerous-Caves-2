@@ -13,6 +13,24 @@ This project started as a fork of [Dangerous Caves](https://github.com/Evil-Loot
 
 Released under the MIT license.
 
+## Region protection (Lands / WorldGuard / GriefPrevention)
+Dangerous Caves can stop its effects inside players' protected areas, so your plugin won't alter claimed/protected blocks, spawn custom mobs, cause cave-ins or apply effects there.
+
+Soft integrations (no hard dependency - the plugin works without them):
+- **Lands** - uses claim flags: `ENTITY_GRIEFING` (custom mobs, magma monster, lava creeper), `LEAF_DECAY` (cave-ins, caves aging), and the `lands-effectless` mode (ambient sounds, hypoxia)
+- **WorldGuard** - the `worldguard` mode blocks everything inside any region; the `worldguard-flags` mode uses custom flags: `dc-entity-grief`, `dc-block-change`, `dc-player-effect`
+- **GriefPrevention** (+ optional GriefPreventionFlags with `DCNoEntityGrief`, `DCNoBlockChange`, `DCNoPlayerEffect` flags)
+
+Control it in `config.yml` under `integration.protection`:
+```yaml
+integration:
+  protection:
+    # Comma-separated list of checks. `lands` and `worldguard` are enabled by default
+    mode: lands,worldguard
+    # Set to true to invert the checks
+    invert: false
+```
+
 ## Build
 Maven is required to compile the project.
 
