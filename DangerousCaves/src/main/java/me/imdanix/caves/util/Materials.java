@@ -12,6 +12,7 @@ import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,19 +83,27 @@ public final class Materials {
         block.setBlockData(data, false);
     }
 
-    @SuppressWarnings("deprecation")
+    /**
+     * Create a player head with a custom texture value (base64-encoded textures JSON,
+     * as provided by sites like minecraft-heads.com)
+     * @param value Base64 texture value
+     * @return Player head with the texture applied, or a plain player head if the value is invalid
+     */
     public static ItemStack getHeadFromValue(String value) {
-        UUID id = UUID.nameUUIDFromBytes(value.getBytes());
-        // Heck yeah, magic numbers
-        long less = id.getLeastSignificantBits();
-        int lessA = (int) (less >> 32); int lessB = (int) less;
-        long most = id.getMostSignificantBits();
-        int mostA = (int) (most >> 32); int mostB = (int) most;
-        return Bukkit.getUnsafe().modifyItemStack(
-                new ItemStack(Material.PLAYER_HEAD),
-                "{SkullOwner:{Id:[I;" + lessA + "," + lessB + "," + mostA + "," + mostB + "]," +
-                        "Properties:{textures:[{Value:\"" + value + "\"}]}}}"
-        );
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        if (value == null || value.isEmpty()) return head;
+        try {
+            com.destroystokyo.paper.profile.PlayerProfile profile =
+                    Bukkit.createProfile(UUID.nameUUIDFromBytes(value.getBytes()));
+            profile.setProperty(new com.destroystokyo.paper.profile.ProfileProperty("textures", value));
+            SkullMeta meta = (SkullMeta) head.getItemMeta();
+            meta.setPlayerProfile(profile);
+            head.setItemMeta(meta);
+            return head;
+        } catch (Exception e) {
+            Bukkit.getLogger().warning("[DangerousCaves] Failed to apply custom head texture, using default head: " + e.getMessage());
+            return head;
+        }
     }
 
     public static boolean isCave(Material type) {
