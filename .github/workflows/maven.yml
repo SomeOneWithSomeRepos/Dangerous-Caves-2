@@ -24,8 +24,15 @@ jobs:
           - paper-api-version: 26.3.build.218-stable
             api-version: '26.3'
 
+    outputs:
+      plugin-version: ${{ steps.version.outputs.plugin-version }}
+
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve plugin version
+        id: version
+        run: echo "plugin-version=$(mvn -B -q help:evaluate -Dexpression=full.version -DforceStdout)" >> "$GITHUB_OUTPUT"
 
       - name: Set up JDK 25
         uses: actions/setup-java@v4
@@ -37,10 +44,10 @@ jobs:
       - name: Build with Maven (Paper ${{ matrix.api-version }})
         run: mvn -B verify --file pom.xml -Dbukkit.version=${{ matrix.paper-api-version }} -Dpaper.api.version=${{ matrix.api-version }}
 
-      - name: Rename jar
+      - name: Prepare release files
         run: |
           mkdir -p release
-          cp DangerousCaves/target/Dangerous-Caves-*.jar release/Dangerous-Caves-Paper-${{ matrix.api-version }}.jar
+          cp DangerousCaves/target/Dangerous-Caves-Paper-${{ matrix.api-version }}-*.jar release/
           cp DangerousCaves/target/classes/config.yml release/config-Paper-${{ matrix.api-version }}.yml
 
       - name: Upload artifacts
@@ -48,7 +55,7 @@ jobs:
         with:
           name: Dangerous-Caves-Paper-${{ matrix.api-version }}-${{ github.sha }}
           path: |
-            release/Dangerous-Caves-Paper-${{ matrix.api-version }}.jar
+            release/Dangerous-Caves-Paper-${{ matrix.api-version }}-*.jar
             release/config-Paper-${{ matrix.api-version }}.yml
           if-no-files-found: error
 
@@ -68,8 +75,8 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.ref_name }}-${{ github.run_number }}
-          name: Dangerous Caves build ${{ github.run_number }}
+          tag_name: Dangerous-Caves-v${{ needs.build.outputs.plugin-version }}
+          name: Dangerous-Caves-v${{ needs.build.outputs.plugin-version }}
           body: |
             Automated release from master at commit ${{ github.sha }}.
             Contains one jar per supported Paper version (26.2 and 26.3).

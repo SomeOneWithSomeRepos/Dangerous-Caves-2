@@ -7,6 +7,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.plugin.Plugin;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -30,6 +31,14 @@ public final class Utils {
         return list;
     }
 
+    /**
+     * Fill collection with world names from the config list.
+     * Entries may contain glob patterns (eg. {@code world-*}), which are matched
+     * against all currently loaded worlds. Plain names are kept as is.
+     * If the list is empty, all loaded OVERWORLD worlds are used.
+     * @param worldsStr List of world names and/or glob patterns from config
+     * @param into Collection to fill with resolved world names
+     */
     public static void fillWorlds(List<String> worldsStr, Collection<String> into) {
         into.clear();
         if (worldsStr.isEmpty()) {
@@ -37,7 +46,67 @@ public final class Utils {
                 if (world.getEnvironment() == World.Environment.NORMAL)
                     into.add(world.getName());
             }
-        } else into.addAll(worldsStr);
+        } else {
+            List<Pattern> patterns = new ArrayList<>(worldsStr.size());
+            for (String str : worldsStr) {
+                if (str.indexOf('*') >= 0 || str.indexOf('?') >= 0) {
+                    patterns.add(globToPattern(str));
+                } else {
+                    into.add(str);
+                }
+            }
+            if (!patterns.isEmpty()) {
+                for (World world : Bukkit.getWorlds()) {
+                    String name = world.getName();
+                    if (into.contains(name)) continue;
+                    for (Pattern pattern : patterns) {
+                        if (pattern.matcher(name).matches()) {
+                            into.add(name);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Check if a world name matches a config entry.
+     * Entries may contain glob patterns (eg. {@code world-*}).
+     * @param name World name to check
+     * @param entries Config entries (plain names and/or glob patterns)
+     * @return Does the world name match any entry
+     */
+    public static boolean matchesWorld(String name, Collection<String> entries) {
+        for (String entry : entries) {
+            if (entry.indexOf('*') >= 0 || entry.indexOf('?') >= 0) {
+                if (globToPattern(entry).matcher(name).matches()) return true;
+            } else if (entry.equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Convert a glob pattern ({@code *} and {@code ?} wildcards) to a regex pattern
+     * @param glob Glob pattern
+     * @return Compiled regex pattern matching the same strings
+     */
+    public static Pattern globToPattern(String glob) {
+        StringBuilder regex = new StringBuilder(glob.length() + 8);
+        for (int i = 0; i < glob.length(); i++) {
+            char c = glob.charAt(i);
+            switch (c) {
+                case '*' -> regex.append(".*");
+                case '?' -> regex.append('.');
+                default -> {
+                    if (!Character.isLetterOrDigit(c)) regex.append('\\');
+                    regex.append(c);
+                }
+            }
+        }
+        return Pattern.compile(regex.toString());
     }
 
     public static void setMaxHealth(LivingEntity entity, double health) {

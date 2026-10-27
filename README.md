@@ -31,6 +31,17 @@ integration:
     invert: false
 ```
 
+## Worlds
+Every `worlds` list in `config.yml` (cave-ins, ambient sounds, hypoxia, aging, mobs) accepts plain world names and glob patterns: `*` matches any sequence of characters, `?` matches a single character. Patterns are matched against loaded worlds, so worlds generated at runtime (eg. `planet_01_alpha_nether`) are picked up automatically.
+```yaml
+mobs:
+  worlds:
+    - world
+    - "planet_*"      # all generated planet worlds
+    - "*_nether"      # all nether worlds
+```
+Leave the list empty to enable the feature in all overworld-type worlds.
+
 ## Build
 Maven is required to compile the project.
 
