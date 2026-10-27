@@ -34,6 +34,49 @@ class UtilsTest {
     }
 
     @Test
+    void globMatchesStarWildcard() {
+        var pattern = Utils.globToPattern("world-*");
+        assertEquals(true, pattern.matcher("world-nether").matches());
+        assertEquals(true, pattern.matcher("world-").matches());
+        assertEquals(false, pattern.matcher("world").matches());
+        assertEquals(false, pattern.matcher("my-world-1").matches());
+    }
+
+    @Test
+    void globMatchesQuestionMarkWildcard() {
+        var pattern = Utils.globToPattern("planet_?_*");
+        assertEquals(true, pattern.matcher("planet_1_a").matches());
+        assertEquals(false, pattern.matcher("planet_12_a").matches());
+        assertEquals(false, pattern.matcher("planet__a").matches());
+    }
+
+    @Test
+    void globEscapesRegexCharacters() {
+        var pattern = Utils.globToPattern("world.1+*");
+        assertEquals(true, pattern.matcher("world.1+abc").matches());
+        assertEquals(false, pattern.matcher("worldX1abc").matches());
+        assertEquals(false, pattern.matcher("world.1").matches());
+    }
+
+    @Test
+    void globMatchesExactNames() {
+        var pattern = Utils.globToPattern("world");
+        assertEquals(true, pattern.matcher("world").matches());
+        assertEquals(false, pattern.matcher("world2").matches());
+    }
+
+    @Test
+    void matchesWorldSupportsGlobsAndPlainNames() {
+        var entries = java.util.Arrays.asList("world", "planet_*_nether", "flat?");
+        assertEquals(true, Utils.matchesWorld("world", entries));
+        assertEquals(true, Utils.matchesWorld("planet_03_a_nether", entries));
+        assertEquals(true, Utils.matchesWorld("flat1", entries));
+        assertEquals(false, Utils.matchesWorld("world_nether", entries));
+        assertEquals(false, Utils.matchesWorld("planet_03_a", entries));
+        assertEquals(false, Utils.matchesWorld("other", entries));
+    }
+
+    @Test
     void getEnumResolvesAndDefaults() {
         assertEquals(TickStub.B, Utils.getEnum(TickStub.class, "B"));
         assertEquals(null, Utils.getEnum(TickStub.class, "NOT_EXISTING"));

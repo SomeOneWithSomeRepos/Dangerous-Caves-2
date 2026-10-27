@@ -34,6 +34,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -60,7 +61,7 @@ public class MobsManager implements Manager<CustomMob>, Listener, Tickable, Conf
     private final Dynamics dynamics;
 
     private final Map<String, CustomMob> mobs;
-    private final Set<String> worlds;
+    private final List<String> worlds;
     private boolean disabled;
     private WeightedPool<CustomMob> mobsPool;
 
@@ -77,7 +78,7 @@ public class MobsManager implements Manager<CustomMob>, Listener, Tickable, Conf
         this.config = config;
         this.dynamics = dynamics;
         mobs = new HashMap<>();
-        worlds = new HashSet<>();
+        worlds = new ArrayList<>();
         mobsPool = new WeightedPool<>();
     }
 
@@ -245,7 +246,7 @@ public class MobsManager implements Manager<CustomMob>, Listener, Tickable, Conf
                 !replaceTypes.contains(type) ||
                 !lightCheck.test(loc) ||
                 loc.getBlockY() > yMax ||
-                !worlds.contains(loc.getWorld().getName()) ||
+                !checkWorld(loc.getWorld().getName()) ||
                 !Locations.isCave(loc) ||
                 !Regions.INSTANCE.isAllowed(ActionType.ENTITY, loc) ||
                 !Rng.chance(chance))
@@ -259,7 +260,7 @@ public class MobsManager implements Manager<CustomMob>, Listener, Tickable, Conf
     }
 
     public boolean checkWorld(String world) {
-        return worlds.contains(world);
+        return Utils.matchesWorld(world, worlds);
     }
 
     @Override

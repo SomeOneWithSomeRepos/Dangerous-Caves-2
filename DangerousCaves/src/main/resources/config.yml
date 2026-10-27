@@ -20,6 +20,8 @@ prefix: "&8[&4DangerousCaves&8] &r"
 # NOTE: Worlds
 # World names are case-sensitive
 # Instead of specifying worlds you can leave them blank - all the OVERWORLD worlds are going to be used automatically
+# You can use glob patterns in world names: * matches any sequence of characters, ? matches a single character
+# For example: "world-*" or "planet_*_nether"
 
 # NOTE: Ticks
 # Plugin utilizes its own tick system which is based on vanilla one
@@ -102,7 +104,7 @@ caverns:
   # Cave-Ins - blocks may fall down when mining
   ins:
     enabled: true
-    # List of worlds where cave-ins may appear
+    # List of worlds where cave-ins may appear (supports glob patterns, eg. "world-*")
     worlds:
       - world
     # Chance of cave-ins while mining blocks
@@ -126,7 +128,7 @@ caverns:
   # Ambient Sounds - special sound may be played underground
   ambient:
     enabled: true
-    # List of worlds where ambient sounds can be played
+    # List of worlds where ambient sounds can be played (supports glob patterns, eg. "world-*")
     worlds:
       - world
     # Chance of sound will be played
@@ -156,7 +158,7 @@ caverns:
   # Depth Hypoxia - will cause player to move and dig slower
   hypoxia:
     enabled: true
-    # List of worlds where players can sense hypoxia
+    # List of worlds where players can sense hypoxia (supports glob patterns, eg. "world-*")
     worlds:
       - world
     # Chance of checking the player
@@ -185,7 +187,7 @@ caverns:
   # Caves Aging - over time caves will get some vines and rocks
   aging:
     enabled: true
-    # List of worlds where aging will be processed
+    # List of worlds where aging will be processed (supports glob patterns, eg. "world-*")
     worlds:
       - world
     # Chance of a chunk near player being affected
@@ -243,7 +245,7 @@ mobs:
   # Chance of spawning custom mob instead of vanilla one
   try-chance: 25
 
-  # World where mob can spawn(and work as it's intended to work)
+  # World where mob can spawn(and work as it's intended to work) (supports glob patterns, eg. "world-*")
   worlds:
     - world
 
