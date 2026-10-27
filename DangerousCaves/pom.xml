@@ -5,7 +5,7 @@
     <parent>
         <artifactId>dangerouscaves-parent</artifactId>
         <groupId>me.imdanix.plugins</groupId>
-        <version>2</version>
+        <version>2.3.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -25,7 +25,7 @@
                 </includes>
             </resource>
         </resources>
-        <finalName>Dangerous-Caves-${project.version}.${project.subversion}</finalName>
+        <finalName>Dangerous-Caves-Paper-${paper.api.version}-v${full.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -52,7 +52,7 @@
                             <manifestEntries>
                                 <Specification-Title>DangerousCaves - Make your caves scary</Specification-Title>
                                 <Implementation-Title>me.imdanix.caves</Implementation-Title>
-                                <Implementation-Version>${project.version}.${project.subversion}</Implementation-Version>
+                                <Implementation-Version>${full.version}</Implementation-Version>
                             </manifestEntries>
                         </transformer>
                     </transformers>

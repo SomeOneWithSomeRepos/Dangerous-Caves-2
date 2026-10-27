@@ -6,7 +6,7 @@
 
     <groupId>me.imdanix.plugins</groupId>
     <artifactId>dangerouscaves-parent</artifactId>
-    <version>2</version>
+    <version>2.3.1</version>
     <modules>
         <module>regions/RegionManager</module>
         <module>regions/WorldGuard7</module>
@@ -18,7 +18,8 @@
 
     <description>Adds and improves mechanics in caves</description>
     <properties>
-        <project.subversion>3.0-SNAPSHOT</project.subversion>
+        <project.subversion>${subversion.suffix}</project.subversion>
+        <full.version>${project.version}${project.subversion}</full.version>
         <config.version>25</config.version>
         <paperapi.26.2>26.2.build.134-stable</paperapi.26.2>
         <paperapi.26.3>26.3.build.218-stable</paperapi.26.3>
@@ -28,6 +29,7 @@
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <skip.assembly>true</skip.assembly>
+        <subversion.suffix>-SNAPSHOT</subversion.suffix>
     </properties>
 
     <repositories>

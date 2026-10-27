@@ -1,5 +1,5 @@
 name: DangerousCaves
-version: '${version}.${project.subversion}'
+version: '${full.version}'
 config-version: ${config.version}
 main: me.imdanix.caves.DangerousCaves
 api-version: '${paper.api.version}'
