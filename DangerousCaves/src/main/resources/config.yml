@@ -4,6 +4,10 @@
 # Version of this configuration file
 version: ${config.version}
 
+# Prefix for all player-facing messages from the plugin
+# Supports color codes with &
+prefix: "&8[&4DangerousCaves&8] &r"
+
 # NOTE: Chances
 # All the chances are in percents
 
@@ -76,6 +80,20 @@ integration:
 # Cave-related mechanics
 #
 caverns:
+
+  # Danger Scaling - cave dangers (cave-ins, hypoxia) scale with the time a player spends in caves
+  # New or returning players start with reduced danger and it grows to full strength over time
+  scaling:
+    enabled: true
+    # Multiplier for cave dangers at the start (right after joining or being on the surface)
+    min-multiplier: 0.5
+    # Maximal multiplier, reached after `scale-time` seconds in caves
+    max-multiplier: 1.0
+    # Time in seconds spent in caves to go from min-multiplier to max-multiplier
+    scale-time: 300
+    # Time in seconds spent outside of caves (on the surface) to go from max-multiplier back to min-multiplier
+    # Time spent offline is not counted
+    reset-time: 60
 
   # Cave-Ins - blocks may fall down when mining
   ins:
@@ -200,7 +218,7 @@ caverns:
       replace: true
     # Replace torch on caves aging. Not affected by `change-chance`
     # Obviously, doesn't work with max-light-level
-    torch-remove-chance: 40
+    torch-remove-chance: 5
     # List of coordinates of chunks that should be ignored
     # To get chunk coordinates just divide your coordinates by 16 and ignore remainder(or use command)
     # "-1,-1" variant is allowed(just one chunk)

@@ -8,6 +8,7 @@ import me.imdanix.caves.regions.Regions;
 import me.imdanix.caves.ticks.TickLevel;
 import me.imdanix.caves.ticks.Tickable;
 import me.imdanix.caves.util.Locations;
+import me.imdanix.caves.util.Messages;
 import me.imdanix.caves.util.Utils;
 import me.imdanix.caves.util.random.Rng;
 import me.imdanix.math.FormulaEvaluator;
@@ -37,10 +38,12 @@ import java.util.WeakHashMap;
 import java.util.function.Predicate;
 
 public class DepthHypoxia implements Tickable, Configurable {
-    private static final PotionEffect SLOW = new PotionEffect(PotionEffectType.SLOWNESS, 120, 1);
-    private static final PotionEffect SLOW_DIGGING = new PotionEffect(PotionEffectType.MINING_FATIGUE, 55, 1);
+    private static final PotionEffect SLOW = new PotionEffect(PotionEffectType.SLOWNESS, 805, 1);
+    private static final PotionEffect SLOW_DIGGING = new PotionEffect(PotionEffectType.MINING_FATIGUE, 805, 1);
 
     private final Plugin plugin;
+    private final DangerScaling scaling;
+    private final Messages msg;
 
     private final Set<String> worlds;
     private final HypoxiaChancePlaceholder placeholder;
@@ -57,8 +60,10 @@ public class DepthHypoxia implements Tickable, Configurable {
     private FormulaEvaluator formula;
     private Predicate<Player> condition;
 
-    public DepthHypoxia(Plugin plugin) {
+    public DepthHypoxia(Plugin plugin, DangerScaling scaling, Messages msg) {
         this.plugin = plugin;
+        this.scaling = scaling;
+        this.msg = msg;
         worlds = new HashSet<>();
         messages = new ArrayList<>();
         placeholder = new HypoxiaChancePlaceholder();
@@ -92,7 +97,7 @@ public class DepthHypoxia implements Tickable, Configurable {
                 player.addPotionEffect(SLOW);
                 player.addPotionEffect(SLOW_DIGGING);
                 if (messages.isEmpty()) continue;
-                String text = Rng.randomElement(messages).replace("%player", player.getName());
+                String text = msg.prefix() + Rng.randomElement(messages).replace("%player", player.getName());
                 if (actionbar) {
                     // Spigot still doesn't have Player#sendActionBar, bruh
                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(text));
@@ -106,7 +111,7 @@ public class DepthHypoxia implements Tickable, Configurable {
     private boolean checkConditions(Player player) {
         Location loc = player.getLocation();
         return Locations.isCave(loc) && loc.getY() <= yMax &&
-                Rng.chance(chance) && Rng.chance(getChance(player)) &&
+                Rng.chance(chance) && Rng.chance(getChance(player, scaling.getMultiplier(player))) &&
                 Regions.INSTANCE.isAllowed(ActionType.EFFECT, loc);
     }
 
@@ -122,16 +127,16 @@ public class DepthHypoxia implements Tickable, Configurable {
         }
         if (check && Rng.chance(chance)) {
             double hypoxiaChance;
-            boolean chanceCheck = Rng.chance(hypoxiaChance = getChance(player));
+            boolean chanceCheck = Rng.chance(hypoxiaChance = getChance(player, scaling.getMultiplier(player)));
             placeholder.cachePlayer(hypoxiaChance, player);
             return chanceCheck && Regions.INSTANCE.isAllowed(ActionType.EFFECT, loc);
         } else {
-            placeholder.cachePlayer(getChance(player), player);
+            placeholder.cachePlayer(getChance(player, scaling.getMultiplier(player)), player);
             return false;
         }
     }
 
-    private double getChance(Player player) {
+    private double getChance(Player player, double scale) {
         double yMin = player.getWorld().getMinHeight();
         double depthChance = 1d - (player.getLocation().getY() - yMin) / (yMax - yMin);
         double weightChance = 0;
@@ -141,8 +146,12 @@ public class DepthHypoxia implements Tickable, Configurable {
             weightChance += item.getAmount() / (float) item.getMaxStackSize();
         }
         weightChance /= contents.length;
-        double calcChance = formula.eval(Map.of("depth", depthChance, "inventory", weightChance));
+        double calcChance = formula.eval(Map.of("depth", depthChance, "inventory", weightChance)) * scale;
         return Math.max(minChance, Math.min(maxChance, calcChance));
+    }
+
+    public double getChance(Player player) {
+        return getChance(player, scaling.getMultiplier(player));
     }
 
     @Override

@@ -24,9 +24,10 @@ public class Configuration implements Manager<Configurable> {
         configurables = new TreeSet<>((incoming, checked) -> {
             if (incoming == checked) return 0;
             Configurable.Before before = incoming.getClass().getAnnotation(Configurable.Before.class);
-            return before != null && before.value().equals(checked.getConfigPath())
-                    ? -1
-                    : Integer.compare(incoming.hashCode(), checked.hashCode());
+            if (before != null && before.value().equals(checked.getConfigPath())) return -1;
+            before = checked.getClass().getAnnotation(Configurable.Before.class);
+            if (before != null && before.value().equals(incoming.getConfigPath())) return 1;
+            return incoming.getClass().getName().compareTo(checked.getClass().getName());
         });
         file = new File(plugin.getDataFolder(), name + ".yml");
         this.version = version;

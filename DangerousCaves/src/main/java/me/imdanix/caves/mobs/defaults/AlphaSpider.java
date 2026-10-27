@@ -52,13 +52,16 @@ public class AlphaSpider extends MobBase implements Listener {
         LivingEntity entity = (LivingEntity) event.getEntity();
         Entity damager = event.getDamager();
         if (Rng.nextBoolean()) {
-            if (minionChance > 0 && Rng.chance(minionChance))
+            if (minionChance > 0 && Rng.chance(minionChance) &&
+                    Regions.INSTANCE.isAllowed(ActionType.ENTITY, damager.getLocation()))
                 damager.getWorld().spawnEntity(damager.getLocation(), EntityType.CAVE_SPIDER);
 
             if (cobwebChance > 0) {
                 Location loc = event.getEntity().getLocation();
-                loc.getBlock().setType(Material.COBWEB);
-                entity.getEyeLocation().getBlock().setType(Material.COBWEB);
+                if (Regions.INSTANCE.isAllowed(ActionType.ENTITY, loc)) {
+                    loc.getBlock().setType(Material.COBWEB);
+                    entity.getEyeLocation().getBlock().setType(Material.COBWEB);
+                }
 
                 Locations.loop(3, loc, l -> {
                     if (l.getBlock().getType().isAir() && Rng.chance(cobwebChance) &&

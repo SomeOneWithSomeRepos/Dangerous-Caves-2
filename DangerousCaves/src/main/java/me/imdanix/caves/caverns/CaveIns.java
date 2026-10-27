@@ -52,7 +52,10 @@ public class CaveIns implements Listener, Configurable {
     private int distance;
     private int[][] heightMap;
 
-    public CaveIns() {
+    private final DangerScaling scaling;
+
+    public CaveIns(DangerScaling scaling) {
+        this.scaling = scaling;
         worlds = new HashSet<>();
     }
 
@@ -77,7 +80,7 @@ public class CaveIns implements Listener, Configurable {
         disabled = !cfg.getBoolean("enabled", true);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
         if (disabled) return;
 
@@ -90,7 +93,7 @@ public class CaveIns implements Listener, Configurable {
         if (player.getGameMode() == GameMode.CREATIVE || !Locations.isCave(player.getLocation()) ||
                 (rabbitFoot && player.getInventory().contains(Material.RABBIT_FOOT))) return;
 
-        if (Regions.INSTANCE.isAllowed(ActionType.BLOCK, initBlock.getLocation()) && Rng.chance(chance)) {
+        if (Regions.INSTANCE.isAllowed(ActionType.BLOCK, initBlock.getLocation()) && Rng.chance(chance * scaling.getMultiplier(player))) {
             Location blockLoc = initBlock.getLocation();
             if (blastSound) world.playSound(blockLoc, Sound.ENTITY_GENERIC_EXPLODE, 1, 1);
             if (blastEffect) player.addPotionEffect(BLINDNESS);
@@ -107,7 +110,7 @@ public class CaveIns implements Listener, Configurable {
                 Block search = blocks.get(0).getRelative(BlockFace.DOWN);
 
                 if (!search.isPassable()) continue;
-                while (search.getY() > 0 && search.isPassable() && !(search = search.getRelative(BlockFace.DOWN)).getType().isSolid());
+                while (search.getY() > world.getMinHeight() && search.isPassable() && !(search = search.getRelative(BlockFace.DOWN)).getType().isSolid());
 
                 for (Block block : blocks) {
                     search = search.getRelative(BlockFace.UP);
@@ -161,6 +164,10 @@ public class CaveIns implements Listener, Configurable {
         }
 
         return heightMap;
+    }
+
+    public double getChance(Player player) {
+        return chance * scaling.getMultiplier(player);
     }
 
     @Override

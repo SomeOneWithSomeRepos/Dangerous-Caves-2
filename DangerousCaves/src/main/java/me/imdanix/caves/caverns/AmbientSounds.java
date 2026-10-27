@@ -45,7 +45,8 @@ public class AmbientSounds implements Tickable, Configurable {
         yMax = cfg.getInt("y-max", 64);
         radius = cfg.getDouble("near", 7);
         sounds.clear();
-        for (String soundStr : Configuration.section(cfg, "sounds").getKeys(false)) {
+        ConfigurationSection soundsCfg = Configuration.section(cfg, "sounds");
+        for (String soundStr : soundsCfg.getKeys(false)) {
             final Sound sound;
             try {
                 sound = Sound.valueOf(soundStr.toUpperCase(Locale.ROOT));
@@ -54,8 +55,8 @@ public class AmbientSounds implements Tickable, Configurable {
             }
             sounds.add(new WrappedSound(
                     sound,
-                    cfg.getDouble("volume", 1),
-                    cfg.getDouble("pitch", 0.5)
+                    soundsCfg.getDouble(soundStr + ".volume", 1),
+                    soundsCfg.getDouble(soundStr + ".pitch", 0.5)
             ));
         }
         if (sounds.isEmpty()) chance = 0;

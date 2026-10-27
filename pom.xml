@@ -19,7 +19,7 @@
     <description>Adds and improves mechanics in caves</description>
     <properties>
         <project.subversion>3.0-SNAPSHOT</project.subversion>
-        <config.version>24</config.version>
+        <config.version>25</config.version>
         <paperapi.26.2>26.2.build.134-stable</paperapi.26.2>
         <paperapi.26.3>26.3.build.218-stable</paperapi.26.3>
         <bukkit.version>${paperapi.26.3}</bukkit.version>
