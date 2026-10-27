@@ -1,10 +1,15 @@
 package me.imdanix.caves.commands;
 
 import me.imdanix.caves.DangerousCaves;
+import me.imdanix.caves.caverns.CaveIns;
+import me.imdanix.caves.caverns.DangerScaling;
+import me.imdanix.caves.caverns.DepthHypoxia;
 import me.imdanix.caves.configuration.Configuration;
 import me.imdanix.caves.mobs.MobsManager;
 import me.imdanix.caves.ticks.Dynamics;
 import me.imdanix.caves.ticks.TickLevel;
+import me.imdanix.caves.util.Locations;
+import me.imdanix.caves.util.Messages;
 import me.imdanix.caves.util.TagHelper;
 import me.imdanix.caves.util.Utils;
 import org.bukkit.Bukkit;
@@ -42,6 +47,10 @@ public class Commander implements CommandExecutor, TabCompleter {
     private final MobsManager mobsManager;
     private final Configuration cfg;
     private final Dynamics dynamics;
+    private final Messages msg;
+    private final DepthHypoxia hypoxia;
+    private final CaveIns caveIns;
+    private final DangerScaling scaling;
 
     private final String[] version;
 
@@ -49,6 +58,10 @@ public class Commander implements CommandExecutor, TabCompleter {
         this.mobsManager = plugin.getMobs();
         this.cfg = plugin.getConfiguration();
         this.dynamics = plugin.getDynamics();
+        this.msg = plugin.getMessages();
+        this.hypoxia = plugin.getHypoxia();
+        this.caveIns = plugin.getCaveIns();
+        this.scaling = plugin.getDangerScaling();
         this.version = new String[]{plugin.getDescription().getVersion(), plugin.getConfiguration().getVersion()};
     }
 
@@ -59,23 +72,28 @@ public class Commander implements CommandExecutor, TabCompleter {
         } else switch (args[0].toLowerCase(Locale.ROOT)) {
             // TODO: "debug"
 
+            case "info" -> {
+                if (!sender.hasPermission("dangerouscaves.command.info")) return false;
+                info(sender);
+            }
+
             case "summon", "spawn" -> {
                 if (!sender.hasPermission("dangerouscaves.command.summon")) return false;
                 if (args.length < 2) {
-                    sender.sendMessage(Utils.clr("&cYou should specify mob's type to summon!"));
+                    msg.send(sender, "&cYou should specify mob's type to summon!");
                     return true;
                 }
                 Location loc = getLocation(sender, Arrays.copyOfRange(args, 2, args.length));
                 if (loc == null) {
-                    sender.sendMessage(Utils.clr("&cPlease, follow the syntax!"));
+                    msg.send(sender, "&cPlease, follow the syntax!");
                     return true;
                 }
                 String type = args[1].toLowerCase(Locale.ROOT);
                 if (mobsManager.spawn(type, loc) != null) {
-                    sender.sendMessage(Utils.clr("&aMob &e" + type + "&a was successfully summoned."));
+                    msg.send(sender, "&aMob &e" + type + "&a was successfully summoned.");
                 } else {
-                    sender.sendMessage(Utils.clr("&cThere's no mob's type called &e" + type + "&c!"));
-                    sender.sendMessage(Utils.clr("&7List of all mob's types: &f" + String.join(", ", mobsManager.getMobs())));
+                    msg.send(sender, "&cThere's no mob's type called &e" + type + "&c!");
+                    msg.send(sender, "&7List of all mob's types: &f" + String.join(", ", mobsManager.getMobs()));
                 }
             }
 
@@ -83,47 +101,44 @@ public class Commander implements CommandExecutor, TabCompleter {
                 if (!sender.hasPermission("dangerouscaves.command.kill")) return false;
                 if (args.length < 2) {
                     killAll(LivingEntity::remove);
-                    sender.sendMessage(Utils.clr("&aSuccessfully killed all DC mobs."));
+                    msg.send(sender, "&aSuccessfully killed all DC mobs.");
                 } else {
                     String type = args[1].toLowerCase(Locale.ROOT);
-                    if (mobsManager.getMob(type) == null) {
+                    if (mobsManager.getMob(type) != null || mobsManager.getMobs().contains(type)) {
                         killAll(entity -> {if (TagHelper.isTagged(entity, type)) entity.remove();});
-                        sender.sendMessage(Utils.clr("&aSuccessfully killed all DC mobs of type &e" + type + "&a."));
+                        msg.send(sender, "&aSuccessfully killed all DC mobs of type &e" + type + "&a.");
                     } else {
-                        sender.sendMessage(Utils.clr("&cThere's no mob's type called &e" + type + "&c!"));
-                        sender.sendMessage(Utils.clr("&7List of all mob's types: &f" + String.join(", ", mobsManager.getMobs())));
+                        msg.send(sender, "&cThere's no mob's type called &e" + type + "&c!");
+                        msg.send(sender, "&7List of all mob's types: &f" + String.join(", ", mobsManager.getMobs()));
                     }
                 }
             }
 
             // TODO v Temporary command - need to finish mimics...
-            case "mimeremove" -> { // /dcaves mimeremove 3 me
+            case "mimeremove" -> { // /dcaves mimeremove <radius> [all]
                 if (!sender.hasPermission("dangerouscaves.command.kill")) return false;
                 boolean checkAll = args.length < 3 || !args[2].equalsIgnoreCase("all") || sender instanceof ConsoleCommandSender;
-                int radius = args.length < 2 ? 1 : (int) Utils.getDouble(args[1], 1);
+                int radius = args.length < 2 ? 1 : Math.max(1, (int) Utils.getDouble(args[1], 1));
 
                 Collection<? extends Player> players = checkAll ? Bukkit.getOnlinePlayers() : Collections.singleton((Player) sender);
-                Set<Integer> checked = new HashSet<>(); // Better to use fastutils, but unavailable in Spigot
+                Set<Chunk> checked = new HashSet<>();
                 List<BlockState> toRemove = new ArrayList<>();
                 for (Player player : players) {
                     World world = player.getWorld();
-                    final int centerX = (int) player.getLocation().getX() / 16;
-                    final int centerZ = (int) player.getLocation().getZ() / 16;
+                    final int centerX = player.getLocation().getBlockX() >> 4;
+                    final int centerZ = player.getLocation().getBlockZ() >> 4;
                     for (int chunkX = centerX - radius; chunkX <= centerX + radius; ++chunkX) for (int chunkZ = centerZ - radius; chunkZ <= centerZ + radius; ++chunkZ) {
-                        int hash = chunkZ * (chunkX >> 16) * world.getUID().hashCode();
-                        if (!world.isChunkLoaded(chunkX, chunkZ) || checked.contains(hash)) continue;
+                        if (!world.isChunkLoaded(chunkX, chunkZ)) continue;
                         Chunk chunk = world.getChunkAt(chunkX, chunkZ);
-                        for (int x = 0; x < 16; ++x) for (int z = 0; z < 16; ++z) {
-                            for (BlockState state : chunk.getTileEntities()) {
-                                if (state.getType() != Material.CHEST) continue;
-                                String tag = TagHelper.getTag(state);
-                                if (tag != null && tag.startsWith("mimic")) toRemove.add(state);
-                            }
+                        if (!checked.add(chunk)) continue;
+                        for (BlockState state : chunk.getTileEntities()) {
+                            if (state.getType() != Material.CHEST) continue;
+                            String tag = TagHelper.getTag(state);
+                            if (tag != null && tag.startsWith("mimic")) toRemove.add(state);
                         }
-                        checked.add(hash);
                     }
                 }
-                sender.sendMessage(Utils.clr("&eRemoving " + toRemove.size() + " mimic chests..."));
+                msg.send(sender, "&eRemoving " + toRemove.size() + " mimic chests...");
                 for (BlockState block : toRemove) block.getBlock().setType(Material.AIR, false);
             }
             // TODO ^
@@ -131,13 +146,13 @@ public class Commander implements CommandExecutor, TabCompleter {
             case "tick" -> {
                 if (!sender.hasPermission("dangerouscaves.command.tick")) return false;
                 for (TickLevel level : TickLevel.values()) dynamics.tick(level);
-                sender.sendMessage(Utils.clr("&aTicked every tickables."));
+                msg.send(sender, "&aTicked every tickables.");
             }
 
             case "reload", "r" -> {
                 if (!sender.hasPermission("dangerouscaves.command.reload")) return false;
                 cfg.reloadYml();
-                sender.sendMessage(Utils.clr("&aPlugin was successfully reloaded."));
+                msg.send(sender, "&aPlugin was successfully reloaded.");
                 cfg.checkVersion(true);
             }
             default -> help(sender, label);
@@ -207,12 +222,38 @@ public class Commander implements CommandExecutor, TabCompleter {
         }
     }
 
+    private void info(CommandSender sender) {
+        if (!(sender instanceof Entity entity)) {
+            msg.send(sender, "&cThis command can be used only by players and entities!");
+            return;
+        }
+        Location loc = entity.getLocation();
+        World world = loc.getWorld();
+        boolean inCave = Locations.isCave(loc);
+        msg.sendRaw(sender, Utils.clr("&6&lDangerousCaves &7info"));
+        msg.send(sender, "&7World: &f" + world.getName() +
+                " &7| X: &f" + loc.getBlockX() +
+                " &7| Y: &f" + loc.getBlockY() +
+                " &7| Z: &f" + loc.getBlockZ());
+        msg.send(sender, "&7In cave: " + (inCave ? "&ayes" : "&cno") +
+                " &7| Depth: &f" + (world.getMinHeight() - loc.getBlockY()) +
+                " &7| Sky light: &f" + loc.getBlock().getLightFromSky());
+        if (sender instanceof Player player) {
+            msg.send(sender, "&7Hypoxia chance: &f" + Math.round(hypoxia.getChance(player) * 1000) / 10d + "%" +
+                    " &7| Cave-in chance: &f" + Math.round(caveIns.getChance(player) * 1000) / 10d + "%" +
+                    " &7| Danger scale: &fx" + Math.round(scaling.getMultiplier(player) * 100) / 100d);
+            long nearby = world.getNearbyEntities(loc, 16, 16, 16).stream()
+                    .filter(e -> e instanceof LivingEntity living && TagHelper.isTagged(living)).count();
+            msg.send(sender, "&7Nearby DC mobs: &f" + nearby);
+        }
+    }
+
     private void help(CommandSender sender, String label) {
-        sender.sendMessage(Utils.clr("&6&lDangerousCaves&e v" + version[0] + " c" + version[1]));
-        sender.sendMessage(Utils.clr("&a /" + label + " info &7- Get some info about your location."));
-        sender.sendMessage(Utils.clr("&a /" + label + " summon <mob> [x] [y] [z] [yaw] [pitch] [world] &7- Spawn a &emob&7 on your or desired location."));
-        sender.sendMessage(Utils.clr("&a /" + label + " kill [mob] &7- Kill all DC mobs (of type &emob&7 if specified)."));
-        sender.sendMessage(Utils.clr("&a /" + label + " tick &7- Tick everything manually."));
-        sender.sendMessage(Utils.clr("&a /" + label + " reload &7- Reload plugin configuration."));
+        msg.sendRaw(sender, Utils.clr("&6&lDangerousCaves&e v" + version[0] + " c" + version[1]));
+        msg.send(sender, "&a /" + label + " info &7- Get some info about your location.");
+        msg.send(sender, "&a /" + label + " summon <mob> [x] [y] [z] [yaw] [pitch] [world] &7- Spawn a &emob&7 on your or desired location.");
+        msg.send(sender, "&a /" + label + " kill [mob] &7- Kill all DC mobs (of type &emob&7 if specified).");
+        msg.send(sender, "&a /" + label + " tick &7- Tick everything manually.");
+        msg.send(sender, "&a /" + label + " reload &7- Reload plugin configuration.");
     }
 }

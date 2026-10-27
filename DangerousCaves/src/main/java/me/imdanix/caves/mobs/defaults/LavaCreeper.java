@@ -42,10 +42,10 @@ public class LavaCreeper extends MobBase implements CustomMob.Ticking, Listener 
     @Override
     protected void configure(ConfigurationSection cfg) {
         chance = cfg.getDouble("change-chance", 50) / 100;
-        fire = cfg.getDouble("blocks.fire", 33.33) / 100;
-        magmaBlock = cfg.getDouble("blocks.magma_block", 25) / 100;
-        obsidian = cfg.getDouble("blocks.obsidian", 20) / 100;
-        lava = cfg.getDouble("blocks.lava", 16.67) / 100;
+        fire = cfg.getDouble("block-chances.fire", 33.33) / 100;
+        magmaBlock = cfg.getDouble("block-chances.magma_block", 25) / 100;
+        obsidian = cfg.getDouble("block-chances.obsidian", 20) / 100;
+        lava = cfg.getDouble("block-chances.lava", 16.67) / 100;
         fireTouch = cfg.getInt("fire-touch", 10);
         radius = cfg.getInt("radius", 4);
         radiusSquared = radius * radius;

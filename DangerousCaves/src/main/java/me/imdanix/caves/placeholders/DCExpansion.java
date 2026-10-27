@@ -13,10 +13,12 @@ import java.util.Map;
 public class DCExpansion extends PlaceholderExpansion implements Manager<Placeholder> {
     private final Map<String, Placeholder> placeholders;
     private final Configuration config;
+    private final String version;
 
-    public DCExpansion(Configuration config) {
+    public DCExpansion(Configuration config, String version) {
         this.placeholders = new HashMap<>();
         this.config = config;
+        this.version = version;
     }
 
     @Override
@@ -41,7 +43,7 @@ public class DCExpansion extends PlaceholderExpansion implements Manager<Placeho
 
     @Override
     public String getVersion(){
-        return "1.0";
+        return version;
     }
 
     @Override

@@ -3,6 +3,7 @@ package me.imdanix.caves;
 import me.imdanix.caves.caverns.AmbientSounds;
 import me.imdanix.caves.caverns.CaveIns;
 import me.imdanix.caves.caverns.CavesAging;
+import me.imdanix.caves.caverns.DangerScaling;
 import me.imdanix.caves.caverns.DepthHypoxia;
 import me.imdanix.caves.commands.Commander;
 import me.imdanix.caves.configuration.Configuration;
@@ -10,6 +11,7 @@ import me.imdanix.caves.mobs.MobsManager;
 import me.imdanix.caves.placeholders.DCExpansion;
 import me.imdanix.caves.regions.Regions;
 import me.imdanix.caves.ticks.Dynamics;
+import me.imdanix.caves.util.Messages;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -22,6 +24,10 @@ public class DangerousCaves extends JavaPlugin {
     private MobsManager mobsManager;
     private Dynamics dynamics;
     private Configuration cfg;
+    private Messages messages;
+    private DangerScaling dangerScaling;
+    private CaveIns caveIns;
+    private DepthHypoxia hypoxia;
 
     @Override
     public void onLoad() {
@@ -42,13 +48,15 @@ public class DangerousCaves extends JavaPlugin {
         mobsManager = new MobsManager(this, cfg, dynamics);
         DefaultMobs.registerAll(mobsManager);
 
+        messages = new Messages();
+        dangerScaling = new DangerScaling();
         AmbientSounds ambient = new AmbientSounds();
-        CaveIns caveIns = new CaveIns();
+        caveIns = new CaveIns(dangerScaling);
         CavesAging cavesAging = new CavesAging(this);
-        DepthHypoxia hypoxia = new DepthHypoxia(this);
+        hypoxia = new DepthHypoxia(this, dangerScaling, messages);
 
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            DCExpansion expansion = new DCExpansion(cfg);
+            DCExpansion expansion = new DCExpansion(cfg, getDescription().getVersion());
             expansion.register(hypoxia.getPlaceholder());
             expansion.register();
         }
@@ -60,12 +68,15 @@ public class DangerousCaves extends JavaPlugin {
         dynamics.register(ambient);
         dynamics.register(cavesAging);
         dynamics.register(hypoxia);
+        dynamics.register(dangerScaling);
 
+        cfg.register(messages);
         cfg.register(mobsManager);
         cfg.register(ambient);
         cfg.register(cavesAging);
         cfg.register(caveIns);
         cfg.register(hypoxia);
+        cfg.register(dangerScaling);
 
         Objects.requireNonNull(getCommand("dangerouscaves")).setExecutor(new Commander(this));
 
@@ -89,5 +100,21 @@ public class DangerousCaves extends JavaPlugin {
 
     public Configuration getConfiguration() {
         return cfg;
+    }
+
+    public Messages getMessages() {
+        return messages;
+    }
+
+    public DangerScaling getDangerScaling() {
+        return dangerScaling;
+    }
+
+    public CaveIns getCaveIns() {
+        return caveIns;
+    }
+
+    public DepthHypoxia getHypoxia() {
+        return hypoxia;
     }
 }

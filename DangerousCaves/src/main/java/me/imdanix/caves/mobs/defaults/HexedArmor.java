@@ -68,8 +68,7 @@ public class HexedArmor extends MobBase implements Listener {
     }
 
     private ItemStack getRandom(List<Material> armor) {
-        int i = Rng.nextInt(armor.size());
-        return i >= armor.size() ? null : enchant(new ItemStack(armor.get(i)));
+        return enchant(new ItemStack(armor.get(Rng.nextInt(armor.size()))));
     }
 
     private ItemStack enchant(ItemStack item) {

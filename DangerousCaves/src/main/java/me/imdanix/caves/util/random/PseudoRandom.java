@@ -19,7 +19,9 @@ public class PseudoRandom implements RandomGenerator {
 
     @Override
     public int nextInt() {
-        return randomValues[cur >= randomValues.length ? (cur = 0) : cur++];
+        int value = randomValues[cur];
+        cur = (cur + 1) % randomValues.length;
+        return value;
     }
 
     @Override

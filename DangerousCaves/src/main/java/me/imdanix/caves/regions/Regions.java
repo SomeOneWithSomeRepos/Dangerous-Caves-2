@@ -44,6 +44,7 @@ public enum Regions implements Manager<RegionProtector>, Configurable {
         // TODO Logger util?
         Logger logger = Bukkit.getPluginManager().getPlugin("DangerousCaves").getLogger();
 
+        current.clear();
         boolean invert = cfg.getBoolean("invert", false);
         String[] modes = cfg.getString("mode", "none").toLowerCase(Locale.ROOT).split(",\\s*");
 

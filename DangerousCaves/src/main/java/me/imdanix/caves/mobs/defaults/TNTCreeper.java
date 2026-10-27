@@ -1,6 +1,8 @@
 package me.imdanix.caves.mobs.defaults;
 
 import me.imdanix.caves.mobs.MobBase;
+import me.imdanix.caves.regions.ActionType;
+import me.imdanix.caves.regions.Regions;
 import me.imdanix.caves.util.random.Rng;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -52,7 +54,8 @@ public class TNTCreeper extends MobBase implements Listener {
 
     @EventHandler
     public void onDamage(EntityDamageByEntityEvent event) {
-        if (explosionChance > 0 && isThis(event.getEntity()) && Rng.chance(explosionChance)) {
+        if (explosionChance > 0 && isThis(event.getEntity()) && Rng.chance(explosionChance) &&
+                Regions.INSTANCE.isAllowed(ActionType.ENTITY, event.getEntity().getLocation())) {
             event.getDamager().getWorld().createExplosion(event.getDamager().getLocation(), 0.01f);
         }
     }
